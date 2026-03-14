@@ -23,6 +23,8 @@ model Category {
   name         String
   type         CategoryType
   transactions Transaction[]
+
+  @@unique([name, userId], name: "name_userId")
 }
 
 model Transaction {
@@ -33,7 +35,7 @@ model Transaction {
   categoryId      String          @db.Uuid
   type            TransactionType
   amount          Decimal
-  note            String? // nullable
+  note            String?
   transactionDate DateTime
 }
 

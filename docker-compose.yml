@@ -12,21 +12,5 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
 
-  expense-api:
-    build: .
-    container_name: expense-api
-    restart: always
-    env_file:
-      - .env
-    ports:
-      - "2000:2000"
-    depends_on:
-      - db
-    volumes:
-      - ./src:/usr/src/app/src # hanya mount src, tidak timpa dist/
-      - ./prisma:/usr/src/app/prisma
-      - /usr/src/app/node_modules
-    command: sh -c "npx prisma generate && npx prisma migrate deploy && node dist/main.js"
-
 volumes:
   db_data:
