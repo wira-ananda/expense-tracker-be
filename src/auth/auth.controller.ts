@@ -14,8 +14,8 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() body: { emailOrUsername: string; password: string }) {
-    const { emailOrUsername, password } = body;
-    return this.authService.login(emailOrUsername, password);
+  async login(@Body() body: { usernameOrEmail: string; password: string }) {
+    const { usernameOrEmail, password } = body;
+    return this.authService.login(usernameOrEmail, password);
   }
 }

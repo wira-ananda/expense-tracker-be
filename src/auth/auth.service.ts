@@ -29,10 +29,10 @@ export class AuthService {
     return { ...user, token };
   }
 
-  async login(emailOrUsername: string, password: string) {
+  async login(usernameOrEmail: string, password: string) {
     const user = await prisma.user.findFirst({
       where: {
-        OR: [{ email: emailOrUsername }, { username: emailOrUsername }],
+        OR: [{ email: usernameOrEmail }, { username: usernameOrEmail }],
       },
     });
     if (!user) throw new UnauthorizedException('Akun tidak ditemukan');
