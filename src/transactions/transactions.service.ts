@@ -8,18 +8,27 @@ const prisma = new PrismaClient();
 
 @Injectable()
 export class TransactionsService {
-  async createTransaction(
-    userId: string,
-    data: CreateTransactionDto,
-  ): Promise<Transaction> {
+  async createTransaction(userId: string, data: CreateTransactionDto) {
+    const category = await prisma.category.findFirst({
+      where: {
+        id: data.categoryId,
+        userId: userId,
+      },
+    });
+
+    if (!category) throw new NotFoundException('Category not found');
+
     return prisma.transaction.create({
       data: {
-        type: data.type,
+        type: category.type,
         amount: data.amount,
         note: data.note,
         transactionDate: data.transactionDate || new Date(),
         user: { connect: { id: userId } },
         category: { connect: { id: data.categoryId } },
+      },
+      include: {
+        category: true,
       },
     });
   }
@@ -27,6 +36,7 @@ export class TransactionsService {
   async getTransactions(userId: string): Promise<Transaction[]> {
     return prisma.transaction.findMany({
       where: { userId },
+      include: { category: true },
     });
   }
 

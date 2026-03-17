@@ -12,5 +12,17 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
 
+  api:
+    build: .
+    container_name: expense-api
+    restart: always
+    ports:
+      - "2000:2000"
+      - "5555:5555"
+    depends_on:
+      - db
+    env_file:
+      - .env
+
 volumes:
   db_data:

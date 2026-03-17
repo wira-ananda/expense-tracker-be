@@ -11,9 +11,6 @@ export class CreateTransactionDto {
   @IsString()
   categoryId: string;
 
-  @IsEnum(TransactionType)
-  type: TransactionType;
-
   @IsNumber()
   amount: number;
 
