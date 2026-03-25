@@ -24,6 +24,7 @@ model Category {
   categoryname String
   type         CategoryType
   transactions Transaction[]
+  isDefault    Boolean       @default(false)
 
   @@unique([categoryname, userId], name: "category_userId")
 }

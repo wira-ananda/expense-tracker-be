@@ -19,7 +19,7 @@ async function main() {
   const incomeCategories = [
     'Gaji',
     'Bonus',
-    'Hadiah',
+    'Freelance',
     'Investasi',
     'Penjualan Produk',
   ];
