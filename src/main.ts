@@ -30,7 +30,7 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  await app.listen(2000, '0.0.0.0', () => {
+  await app.listen(5172, '0.0.0.0', () => {
     console.log('Server running...');
   });
 }

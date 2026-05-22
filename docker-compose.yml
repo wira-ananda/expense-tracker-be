@@ -1,36 +1,44 @@
 services:
   db:
-    image: postgres:16
-    container_name: expense-db
-    restart: always
-    ports:
-      - "5432:5432"
+    image: postgres:16-alpine
+    container_name: expense-tracker-db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: expense_tracker_db
+      POSTGRES_DB: expense_tracker
+    ports:
+      - '2345:5432'
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d expense_tracker']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # api:
-  #   build: .
-  #   container_name: expense-api
-  #   restart: always
-  #   ports:
-  #     - "2000:2000"
-  #     - "5555:5555"
-  #   depends_on:
-  #     - db
-  #   env_file:
-  #     - .env
-
-  #   volumes:
-  #     - .:/app
-  #     - /app/node_modules
-
-  #   command: npm run dev
+  api:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: expense-tracker-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - '5172:5172'
+      - '5555:5555'
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
+    command: sh -c "npm install && npx prisma generate && npx prisma migrate deploy && npm run dev"
 
 volumes:
-  db_data:
+  postgres_data:
 
-# Jalankan Dev : docker compose up -d, npm run dev
+# Jalankan dev : docker compose up -d --build
+# Jalankan prod : docker compose -f docker-compose.prod.yml up -d --build
+# Untuk masuk ke docker : docker exec -it container-name sh
