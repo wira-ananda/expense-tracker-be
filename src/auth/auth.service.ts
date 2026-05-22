@@ -76,6 +76,13 @@ export class AuthService {
       throw new UnauthorizedException('Username/email atau password salah');
     }
 
+    // User dari Clerk tidak punya password
+    if (!user.password) {
+      throw new UnauthorizedException(
+        'Akun ini menggunakan Clerk. Silakan login melalui dashboard.',
+      );
+    }
+
     const isPasswordMatch = await bcrypt.compare(password, user.password);
 
     if (!isPasswordMatch) {
