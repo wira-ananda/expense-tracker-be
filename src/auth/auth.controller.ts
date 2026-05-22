@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -9,7 +17,10 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ClerkSyncDto } from './dto/clerk-sync.dto';
+import { UpdateClerkProfileDto } from './dto/update-clerk-profile.dto';
 import { AuthMiddleware } from './auth.middleware';
+import { ClerkAuthGuard } from './guards/clerk-auth.guard';
 import { CurrentUser } from '../common/decorator/current-user.decorator';
 
 @ApiTags('Auth')
@@ -85,5 +96,77 @@ export class AuthController {
   })
   async me(@CurrentUser() user: { id: string }) {
     return this.authService.me(user.id);
+  }
+
+  @Post('clerk/sync')
+  @UseGuards(ClerkAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Sinkronisasi user Clerk ke database lokal' })
+  @ApiBody({ type: ClerkSyncDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Sinkronisasi berhasil',
+    schema: {
+      example: {
+        id: '0f7c31d9-4d29-4cf4-93e3-6c7e64a5f8f0',
+        clerkId: 'user_2abc123xyz',
+        username: 'johndoe',
+        email: 'john@example.com',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: {
+      example: {
+        statusCode: 401,
+        message: 'Token Clerk tidak valid',
+        error: 'Unauthorized',
+      },
+    },
+  })
+  async clerkSync(@Req() req: any, @Body() body: ClerkSyncDto) {
+    const { clerkId } = req.clerkUser;
+    const { username, email } = body;
+    return this.authService.clerkSync(clerkId, username, email);
+  }
+
+  @Patch('clerk/profile')
+  @UseGuards(ClerkAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update profile user Clerk (data lokal)' })
+  @ApiBody({ type: UpdateClerkProfileDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile berhasil diupdate',
+    schema: {
+      example: {
+        id: '0f7c31d9-4d29-4cf4-93e3-6c7e64a5f8f0',
+        clerkId: 'user_2abc123xyz',
+        username: 'johndoe',
+        email: 'john@example.com',
+        phoneNumber: '081234567890',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: {
+      example: {
+        statusCode: 401,
+        message: 'Token Clerk tidak valid',
+        error: 'Unauthorized',
+      },
+    },
+  })
+  async updateClerkProfile(
+    @Req() req: any,
+    @Body() body: UpdateClerkProfileDto,
+  ) {
+    const { clerkId } = req.clerkUser;
+    const { phoneNumber } = body;
+    return this.authService.updateClerkProfile(clerkId, phoneNumber);
   }
 }

@@ -18,12 +18,17 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed": "ts-node prisma/seed.ts",
-    "studio": "prisma studio --port 5555 --hostname 0.0.0.0",
+    "prisma:seed": "ts-node prisma/seed.ts",
     "migrate-deploy": "prisma migrate deploy",
-    "migrate-dev": "prisma migrate dev"
+    "migrate-dev": "prisma migrate dev",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate-reset": "prisma migrate reset",
+    "prisma:generate": "prisma generate",
+    "prisma:studio": "prisma studio --port 5555 --browser none"
   },
   "dependencies": {
+    "@clerk/backend": "^3.4.11",
+    "@clerk/express": "^2.1.19",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",

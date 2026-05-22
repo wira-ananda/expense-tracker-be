@@ -9,6 +9,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from 'prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
+import { buildDefaultCategories } from './utils/build.default-categories';
 
 @Injectable()
 export class AuthService {
@@ -106,5 +107,115 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  async clerkSync(clerkId: string, username: string, email: string) {
+    try {
+      const cleanedEmail = email.trim().toLowerCase();
+      const cleanedUsername = username.trim();
+
+      // Cek apakah user dengan clerkId sudah ada
+      let user = await this.prisma.user.findUnique({
+        where: { clerkId },
+      });
+
+      if (user) {
+        // User sudah ada, return data user
+        return {
+          id: user.id,
+          clerkId: user.clerkId,
+          username: user.username,
+          email: user.email,
+        };
+      }
+
+      // Cek apakah ada user dengan email yang sama (user lama yang belum punya clerkId)
+      const existingUserByEmail = await this.prisma.user.findUnique({
+        where: { email: cleanedEmail },
+      });
+
+      if (existingUserByEmail) {
+        // Hubungkan user lama dengan clerkId
+        user = await this.prisma.user.update({
+          where: { id: existingUserByEmail.id },
+          data: {
+            clerkId,
+            username: cleanedUsername, // Update username jika berbeda
+          },
+        });
+
+        return {
+          id: user.id,
+          clerkId: user.clerkId,
+          username: user.username,
+          email: user.email,
+        };
+      }
+
+      // Buat user baru
+      user = await this.prisma.user.create({
+        data: {
+          clerkId,
+          username: cleanedUsername,
+          email: cleanedEmail,
+          password: null,
+        },
+      });
+
+      // Buat default categories untuk user baru
+      const defaultCategories = buildDefaultCategories(user.id);
+      await this.prisma.category.createMany({
+        data: defaultCategories,
+      });
+
+      return {
+        id: user.id,
+        clerkId: user.clerkId,
+        username: user.username,
+        email: user.email,
+      };
+    } catch (error) {
+      console.error('Error saat clerk sync:', error);
+      throw new InternalServerErrorException('Gagal sinkronisasi user Clerk');
+    }
+  }
+
+  async updateClerkProfile(clerkId: string, phoneNumber?: string) {
+    try {
+      // Cari user berdasarkan clerkId
+      const user = await this.prisma.user.findUnique({
+        where: { clerkId },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('User tidak ditemukan');
+      }
+
+      // Update phone number
+      const cleanedPhoneNumber = phoneNumber?.trim() || null;
+
+      const updatedUser = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          phoneNumber: cleanedPhoneNumber,
+        },
+        select: {
+          id: true,
+          clerkId: true,
+          username: true,
+          email: true,
+          phoneNumber: true,
+        },
+      });
+
+      return updatedUser;
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+
+      console.error('Error saat update profile:', error);
+      throw new InternalServerErrorException('Gagal update profile');
+    }
   }
 }
